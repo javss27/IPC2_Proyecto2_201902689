@@ -25,6 +25,7 @@ class Espacio:
         self.distancia_acumulada = 1
         self.pre_fila = 0
         self.pre_columna = 0
+        self.camino = "F"
 
 class Unidad_Militar:
     def __init__(self,fila,columna,capacidad):

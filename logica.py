@@ -110,11 +110,12 @@ class Logica:
                 # mapa.ver_cabeceras()
                 if mapa.buscar_entrada(fila_entrada,columna_entrada) and mapa.buscar_salida(fila_destino,columna_destino,"civil"):
                     print("ya esta en la entrada pos fila: ",fila_entrada,"columa",columna_entrada)
-                    mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
+                    self.graficar(mapa,lista_militar2)
+                    """mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
                     self.Camino(mapa,lista_militar2,fila_entrada,columna_entrada,fila_destino,columna_destino)
                     mapa.ver_cabeceras()
                     self.busca_enlace(mapa)
-                    mapa.ver_recorrido()
+                    mapa.ver_recorrido()"""
                 else:
                     print("coordenadas errores o no es una entrada")
             else:
@@ -326,6 +327,66 @@ class Logica:
             print("Sin movimiento",mapa.getEstado(fila,colum_derecha),mapa.getEstado(fila,colum_derecha),mapa.getRecorrido(fila,colum_derecha))
             print("Sin movimiento",mapa.getEstado(fila,colum_izq),mapa.getEstado(fila,colum_izq),mapa.getRecorrido(fila,colum_izq))"""
 
+    def graficar(self,mapa,militar):
+        nombre = "nameXD"
+        cadena = "digraph Matriz{ \n"; 
+        cadena += "node[shape = box,width=0.95,height=0.95,fillcolor=\"azure2\" color=\"white\" style=\"filled\"];\n"
+        cadena += "edge[style = \"bold\"]; \n"
+        #cadena+="node[label = "+ nombre +" fillcolor=\" darkolivegreen1\" pos = \"-1,1!\"]principal;\n"
+
+        """ ESTO FUNCIONA PERO NO SE NECESITA
+        #grafica cabeceras y(filas)
+        temp = mapa.cabeza
+        while temp != None:
+            print(temp.obj.num)
+            cadena+="node[label = "+temp.obj.num+" fillcolor=\" azure1\" pos = \"-1,-"+temp.obj.num+"!\"]y"+temp.obj.num+";\n"
+            temp = temp.siguiente
+        
+        #grafica flechitas
+        temp = mapa.cabeza
+        while temp.siguiente != None:
+            #print("acutal:",temp.obj.num,"siguiente:",aux.obj.num)
+            cadena+="y"+temp.obj.num+"->"+"y"+temp.siguiente.obj.num+";\n"
+            temp = temp.siguiente
+        cadena += "principal->y1\n"
+        """
+
+        #nodos internos
+        temp = mapa.cabeza
+        while temp != None:
+            #declarando nodos internos
+            temp2 = temp.obj.lista.cabeza
+            while temp2 != None:
+                if temp2.obj.estado == "intransitable":
+                    cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" black\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+                elif temp2.obj.estado == "entrada":
+                    cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" forestgreen\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+                elif temp2.obj.estado == "recurso":
+                    cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" gray55\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+                elif temp2.obj.estado =="civil":
+                    cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" blue2\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+                elif (temp2.obj.estado == "transitable") and militar.getMilitar(int(temp.obj.num),int(temp2.obj.num)):
+                    cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" red\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+                else:
+                    cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" gray95\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+
+                temp2 = temp2.siguiente
+            """
+            #graficar flechas
+            temp2 = temp.obj.lista.cabeza
+            while temp2.siguiente != None:
+                cadena +="   x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+"->x"+str(temp.obj.num)+"y"+str(temp2.siguiente.obj.num)+";\n"
+                temp2 = temp2.siguiente
+            #cabezas apuntan a notods    
+            temp2 = temp.obj.lista.cabeza
+            if temp.obj.lista.cabeza != None:
+                cadena+="y"+str(temp.obj.num)+"->"+"x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+            """
+            cadena += "\n"
+            temp = temp.siguiente
+
+        cadena+= "\n}"
+        print(cadena)
  #hacer un recorrido que comience desde las unidades militares para ver si llega al rescate 
  # si llega retonrar una matriz 
  # si no llega no retornar nada o retornar la matriz en la forma que se quedo
@@ -333,6 +394,6 @@ class Logica:
         
 p = Logica('C:/Users/otrop/Desktop/Entrada0.xml')
 p.readXML()
-p.seleccion("ChapinFighter","CiudadGuate","Robocop",6,1,10,10)
+p.seleccion("ChapinRescue","CiudadGotica","Ironman",13,9,14,19)
 #p.Lista_Mapas.ver_mapas()
 #p.Lista_Drones.ver_drones()
