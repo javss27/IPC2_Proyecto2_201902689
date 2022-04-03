@@ -1,5 +1,7 @@
 from typing import List
 from xml.dom import minidom
+
+from cv2 import COLORMAP_AUTUMN
 from TDAS import *
 from clases import *
 import os
@@ -104,11 +106,12 @@ class Logica:
             if self.Lista_Mapas.buscar(ciudad,"civil") and self.Lista_Drones.buscar_tipo_robot(robot,tipo_mision) :
                 print("aber el rescate")
                 mapa = self.Lista_Mapas.getMapa(ciudad)
+                lista_militar2 = self.Lista_Mapas.getLista_Militar(ciudad)
                 # mapa.ver_cabeceras()
                 if mapa.buscar_entrada(fila_entrada,columna_entrada) and mapa.buscar_salida(fila_destino,columna_destino,"civil"):
                     print("ya esta en la entrada pos fila: ",fila_entrada,"columa",columna_entrada)
                     mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
-                    self.Camino(mapa,fila_entrada,columna_entrada,fila_destino,columna_destino)
+                    self.Camino(mapa,lista_militar2,fila_entrada,columna_entrada,fila_destino,columna_destino)
                     mapa.ver_cabeceras()
                     self.busca_enlace(mapa)
                     mapa.ver_recorrido()
@@ -121,17 +124,21 @@ class Logica:
                 print("aber los recursos")
                 mapa = self.Lista_Mapas.getMapa(ciudad)
                 robot = self.Lista_Drones.getRobot(robot)
+                lista_militar = self.Lista_Mapas.getLista_Militar(ciudad)
                 if mapa.buscar_entrada(fila_entrada,columna_entrada) and mapa.buscar_salida(fila_destino,columna_destino,"recurso"):
                     print("ya esta en la entrada",fila_entrada,"columa",columna_entrada)
-                    #mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
-                    #mapa.ver_cabeceras()
+                    mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
+                    #lista_militar.ver_militar()
+                    self.camino2(mapa,lista_militar,robot,fila_entrada,columna_entrada,fila_destino,columna_destino)
+                    mapa.ver_recorrido()
                     print(robot.nombre)
+                    
                 else:
                     print("coordenadas errores o no es una entrada")
             else:
                 print("Mision imposible, unidades de recursos no existe o robot no cumple")
     
-    def Camino(self,mapa,fila_entrada,columna_entrada,fila_destino,columna_destino):
+    def Camino(self,mapa,lista,fila_entrada,columna_entrada,fila_destino,columna_destino):
         llegada = True
         while llegada:
             enter = input()
@@ -142,7 +149,7 @@ class Logica:
             else:
                 for x in range(4):
                     print("aber el for")
-                    self.Enlace(mapa,fila_entrada,columna_entrada)
+                    self.Enlace(mapa,lista,fila_entrada,columna_entrada)
                 
                 x = self.busca_enlace(mapa)
                 try:
@@ -152,24 +159,24 @@ class Logica:
                     print("Al parecer no hay camino")
                     llegada = False
 
-    def Enlace(self,mapa,fila,columna):
+    def Enlace(self,mapa,lista,fila,columna):
         fila_arriba = fila-1
         fila_abajo = fila+1
         colum_derecha = columna +1
         colum_izq = columna-1
-        if(mapa.getEstado(fila_arriba,columna)=="transitable" or mapa.getEstado(fila_arriba,columna)=="civil") and mapa.getRecorrido(fila_arriba,columna)=="L":
+        if(mapa.getEstado(fila_arriba,columna)=="transitable" or mapa.getEstado(fila_arriba,columna)=="civil") and (mapa.getRecorrido(fila_arriba,columna)=="L") and lista.getMilitar(fila_arriba,columna) != True:
             print("arriba")
             mapa.setRecorrido(fila_arriba,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
 
-        elif (mapa.getEstado(fila_abajo,columna)=="transitable" or mapa.getEstado(fila_abajo,columna)=="civil") and mapa.getRecorrido(fila_abajo,columna)=="L":    
+        elif (mapa.getEstado(fila_abajo,columna)=="transitable" or mapa.getEstado(fila_abajo,columna)=="civil") and (mapa.getRecorrido(fila_abajo,columna)=="L") and lista.getMilitar(fila_abajo,columna) != True:    
             print("abajo")
             mapa.setRecorrido(fila_abajo,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
 
-        elif (mapa.getEstado(fila,colum_derecha)=="transitable" or mapa.getEstado(fila,colum_derecha)=="civil") and mapa.getRecorrido(fila,colum_derecha)=="L":    
+        elif (mapa.getEstado(fila,colum_derecha)=="transitable" or mapa.getEstado(fila,colum_derecha)=="civil") and (mapa.getRecorrido(fila,colum_derecha)=="L") and lista.getMilitar(fila,colum_derecha) != True:    
             print("derecha",mapa.getDistancia(fila,columna))
             mapa.setRecorrido(fila,colum_derecha,"E",mapa.getDistancia(fila,columna),fila,columna)
 
-        elif (mapa.getEstado(fila,colum_izq)=="transitable" or mapa.getEstado(fila,colum_izq)=="civil") and mapa.getRecorrido(fila,colum_izq)=="L":    
+        elif (mapa.getEstado(fila,colum_izq)=="transitable" or mapa.getEstado(fila,colum_izq)=="civil") and (mapa.getRecorrido(fila,colum_izq)=="L")and lista.getMilitar(fila,colum_izq) != True:    
             print("izquierda")
             mapa.setRecorrido(fila,colum_izq,"E",mapa.getDistancia(fila,columna),fila,columna)
         else:
@@ -193,10 +200,10 @@ class Logica:
                 temp2 = temp2.siguiente
             temp = temp.siguiente
     
-    def camino2(self,mapa,fila_entrada,columna_entrada,fila_destino,columna_destino):
+    def camino2(self,mapa,lista_militar,robot,fila_entrada,columna_entrada,fila_destino,columna_destino):
         llegada = True
         while llegada:
-            input()
+            entrada = input()
             mapa.ver_cabeceras()
             if fila_entrada==fila_destino and columna_entrada==columna_destino:
                 print("llego")
@@ -204,7 +211,7 @@ class Logica:
             else:
                 for x in range(4):
                     print("aber el for")
-                    self.Enlace2(mapa,fila_entrada,columna_entrada)
+                    self.Enlace2(mapa,lista_militar,robot,fila_entrada,columna_entrada)
                 
                 x = self.busca_enlace(mapa)
                 try:
@@ -214,39 +221,118 @@ class Logica:
                     print("Al parecer no hay camino")
                     llegada = False
     
-    def Enlace2(self,mapa,lista_militar,lista_robot,fila,columna):
+    def Enlace2(self,mapa,lista_militar,robot,fila,columna):
         fila_arriba = fila-1
         fila_abajo = fila+1
         colum_derecha = columna +1
         colum_izq = columna-1
-        if(mapa.getEstado(fila_arriba,columna)=="transitable" or mapa.getEstado(fila_arriba,columna)=="civil") and mapa.getRecorrido(fila_arriba,columna)=="L":
+        if(mapa.getEstado(fila_arriba,columna)=="transitable" or mapa.getEstado(fila_arriba,columna)=="civil"or mapa.getEstado(fila_arriba,columna)=="recurso") and mapa.getRecorrido(fila_arriba,columna)=="L":
             print("arriba")
             #hay que ver si existe unidad militar
-            #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
-            #si no existe hay que siguir normal
-            mapa.setRecorrido(fila_arriba,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
+            if lista_militar.getMilitar(fila_arriba,columna) and int(robot.capacidad) >= 0:
+                print("si hay unidad militar")
+                print("cap unidad",lista_militar.getCapacidad(fila_arriba,columna)," cap robot",robot.capacidad)
+                nuevaCapacidad = int(robot.capacidad)-lista_militar.getCapacidad(fila_arriba,columna)
+                robot.capacidad = nuevaCapacidad
+                print("nueva cap robt:",nuevaCapacidad)
+                if nuevaCapacidad >= 0:
+                    mapa.setRecorrido(fila_arriba,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
+                else:
+                    print("El robot:",robot.nombre," no fue derrotado :(")
+                
+                #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
+            else:
+                if int(robot.capacidad) < 0:
+                    print("El robot ya no puede seguir")
+                else:
+                    print("no hay unidad militar")
+                    #si no existe hay que siguir normal
+                    mapa.setRecorrido(fila_arriba,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
 
-        elif (mapa.getEstado(fila_abajo,columna)=="transitable" or mapa.getEstado(fila_abajo,columna)=="civil") and mapa.getRecorrido(fila_abajo,columna)=="L":    
+        elif (mapa.getEstado(fila_abajo,columna)=="transitable" or mapa.getEstado(fila_abajo,columna)=="civil" or mapa.getEstado(fila_abajo,columna)=="recurso") and mapa.getRecorrido(fila_abajo,columna)=="L":    
             print("abajo")
-            mapa.setRecorrido(fila_abajo,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
+            #hay que ver si existe unidad militar
+            if lista_militar.getMilitar(fila_abajo,columna) and int(robot.capacidad) >= 0:
+                print("si hay unidad militar")
+                #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
+                print("cap unidad",lista_militar.getCapacidad(fila,colum_derecha)," cap robot",robot.capacidad)
+                nuevaCapacidad = int(robot.capacidad)-lista_militar.getCapacidad(fila_abajo,columna)
+                robot.capacidad = nuevaCapacidad
+                print("nueva cap robt:",nuevaCapacidad)
+                if nuevaCapacidad >= 0:
+                    mapa.setRecorrido(fila_abajo,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
+                else:
+                    print("El robot:",robot.nombre," no fue derrotado :(")
+            else:
+                print("no si hay unidad militar")
+                #si no existe hay que siguir normal
+                if int(robot.capacidad) < 0:
+                    print("El robot ya no puede seguir")
+                else:
+                    print("no hay unidad militar")
+                    #si no existe hay que siguir normal
+                    mapa.setRecorrido(fila_abajo,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
 
-        elif (mapa.getEstado(fila,colum_derecha)=="transitable" or mapa.getEstado(fila,colum_derecha)=="civil") and mapa.getRecorrido(fila,colum_derecha)=="L":    
+        elif (mapa.getEstado(fila,colum_derecha)=="transitable" or mapa.getEstado(fila,colum_derecha)=="civil"or mapa.getEstado(fila,colum_derecha)=="recurso") and mapa.getRecorrido(fila,colum_derecha)=="L":    
             print("derecha",mapa.getDistancia(fila,columna))
-            mapa.setRecorrido(fila,colum_derecha,"E",mapa.getDistancia(fila,columna),fila,columna)
+            #hay que ver si existe unidad militar
+            if lista_militar.getMilitar(fila,colum_derecha) and int(robot.capacidad) >= 0:
+                print("si hay unidad militar")
+                print("cap unidad",lista_militar.getCapacidad(fila,colum_derecha)," cap robot",robot.capacidad)
+                nuevaCapacidad = int(robot.capacidad)-lista_militar.getCapacidad(fila,colum_derecha)
+                robot.capacidad = nuevaCapacidad
+                print("nueva cap robt:",nuevaCapacidad)
+                if nuevaCapacidad >= 0:
+                    mapa.setRecorrido(fila,colum_derecha,"E",mapa.getDistancia(fila,columna),fila,columna)
+                else:
+                    print("El robot:",robot.nombre," no fue derrotado :(")
+                #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
+            else:
+                if int(robot.capacidad) < 0:
+                    print("El robot ya no puede seguir")
+                else:
+                    print("no hay unidad militar")
+                    #si no existe hay que siguir normal
+                
+                    #si no existe hay que siguir normal
+                    mapa.setRecorrido(fila,colum_derecha,"E",mapa.getDistancia(fila,columna),fila,columna)
 
-        elif (mapa.getEstado(fila,colum_izq)=="transitable" or mapa.getEstado(fila,colum_izq)=="civil") and mapa.getRecorrido(fila,colum_izq)=="L":    
+        elif (mapa.getEstado(fila,colum_izq)=="transitable" or mapa.getEstado(fila,colum_izq)=="civil" or mapa.getEstado(fila,colum_izq)=="recurso") and mapa.getRecorrido(fila,colum_izq)=="L":    
             print("izquierda")
-            mapa.setRecorrido(fila,colum_izq,"E",mapa.getDistancia(fila,columna),fila,columna)
+            #hay que ver si existe unidad militar
+            if lista_militar.getMilitar(fila,colum_izq) and int(robot.capacidad) >= 0:
+                print("si hay unidad militar")
+                #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
+                print("cap unidad",lista_militar.getCapacidad(fila,colum_derecha)," cap robot",robot.capacidad)
+                nuevaCapacidad = int(robot.capacidad)-lista_militar.getCapacidad(fila,colum_izq)
+                robot.capacidad = nuevaCapacidad
+                print("nueva cap robt:",nuevaCapacidad)
+                if nuevaCapacidad >= 0:
+                    mapa.setRecorrido(fila,colum_izq,"E",mapa.getDistancia(fila,columna),fila,columna)
+                else:
+                    print("El robot:",robot.nombre," no fue derrotado :(")
+            else:
+        
+                if int(robot.capacidad) < 0:
+                    print("El robot ya no puede seguir")
+                else:
+                    print("no hay unidad militar")
+                    #si no existe hay que siguir normal
+                #si no existe hay que siguir normal
+                    mapa.setRecorrido(fila,colum_izq,"E",mapa.getDistancia(fila,columna),fila,columna)
         else:
             print("Sin movimiento")#,mapa.getEstado(fila_arriba,columna),mapa.getEstado(fila_arriba,columna),mapa.getRecorrido(fila_arriba,columna))
             """print("Sin movimiento",mapa.getEstado(fila_abajo,columna),mapa.getEstado(fila_abajo,columna),mapa.getRecorrido(fila_abajo,columna))
             print("Sin movimiento",mapa.getEstado(fila,colum_derecha),mapa.getEstado(fila,colum_derecha),mapa.getRecorrido(fila,colum_derecha))
             print("Sin movimiento",mapa.getEstado(fila,colum_izq),mapa.getEstado(fila,colum_izq),mapa.getRecorrido(fila,colum_izq))"""
 
-    
+ #hacer un recorrido que comience desde las unidades militares para ver si llega al rescate 
+ # si llega retonrar una matriz 
+ # si no llega no retornar nada o retornar la matriz en la forma que se quedo
+ # para todo esto ir tomando la capacidad del robot   
         
 p = Logica('C:/Users/otrop/Desktop/Entrada0.xml')
 p.readXML()
-p.seleccion("ChapinFighter","CiudadGuate2","Robocop",3,1,1,1)
+p.seleccion("ChapinFighter","CiudadGuate","Robocop",6,1,10,10)
 #p.Lista_Mapas.ver_mapas()
 #p.Lista_Drones.ver_drones()

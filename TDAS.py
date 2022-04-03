@@ -125,14 +125,16 @@ class Lista:
                     return True
                 temp = temp.siguiente
         return False
+
+
     def ver_militar(self):    
-        print("aber")  
+        print("Lista de unidades militares")  
         if self.cabeza == None:
             print("ta vacio")
         else:        
             temp = self.cabeza
             while temp != None:
-                print(temp.obj.fila ,temp.obj.columna,temp.obj.capacidad)
+                print("fila:",temp.obj.fila ,"columa:",temp.obj.columna,temp.obj.capacidad)
                 temp = temp.siguiente
 
     def buscar_salida(self,fila,columna,unidad):
@@ -209,6 +211,17 @@ class Lista:
                 if temp.obj.nombre == ciudad:
                     print(temp.obj.nombre)
                     return temp.obj.lista
+                temp = temp.siguiente
+
+    def getLista_Militar(self,ciudad):
+        if self.cabeza == None:
+            print("ta vacio")
+        else:        
+            temp = self.cabeza
+            while temp != None:
+                if temp.obj.nombre == ciudad:
+                    #print(temp.obj.nombre)
+                    return temp.obj.lista2
                 temp = temp.siguiente
 
     def getRobot(self,robot):
@@ -329,6 +342,29 @@ class Lista:
             temp = temp.siguiente
 
   
+    def getMilitar(self,fila,columna):
+        if  self.cabeza == None:
+            print("vacio")
+            return False
+        else:
+            temp = self.cabeza
+            while temp != None:
+                if int(temp.obj.fila) == fila and int(temp.obj.columna)== columna:
+                    return True
+                temp = temp.siguiente
+        return False
+
+    def getCapacidad(self,fila,columna):
+        if  self.cabeza == None:
+                print("vacio")
+                return False
+        else:
+            temp = self.cabeza
+            while temp != None:
+                if int(temp.obj.fila) == fila and int(temp.obj.columna)== columna:
+                    return int(temp.obj.capacidad)
+                temp = temp.siguiente
+        return False
 
     def borrar(self, nodo):
         if nodo == self.cabeza:
