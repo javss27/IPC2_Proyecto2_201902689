@@ -11,10 +11,7 @@ class Logica:
         self.terreno = self.mydoc.getElementsByTagName('listaCiudades')
         self.Lista_Mapas = Lista()
         self.Lista_Drones = Lista()
-        self.arriba = 1
-        self.abajo = 1
-        self.derecha = 1
-        self.izquierda = 1
+        self.paso = True
         
     def readXML(self):
         etiqueta_ciudad = self.terreno[0].getElementsByTagName('ciudad')
@@ -96,28 +93,30 @@ class Logica:
                 lista.add(espacio)
             elif caracter == '"':
                 continue
-        #    print(cont,end=" ")
             cont += 1
-       # print()
         return lista
     
     def seleccion(self,tipo_mision,ciudad,robot,fila_entrada,columna_entrada,fila_destino,columna_destino):
         if tipo_mision == "ChapinRescue":
             if self.Lista_Mapas.buscar(ciudad,"civil") and self.Lista_Drones.buscar_tipo_robot(robot,tipo_mision) :
-                print("aber el rescate")
+                #print("aber el rescate")
                 mapa = self.Lista_Mapas.getMapa(ciudad)
                 lista_militar2 = self.Lista_Mapas.getLista_Militar(ciudad)
                 # mapa.ver_cabeceras()
                 if mapa.buscar_entrada(fila_entrada,columna_entrada) and mapa.buscar_salida(fila_destino,columna_destino,"civil"):
                     print("ya esta en la entrada pos fila: ",fila_entrada,"columa",columna_entrada)
-                    self.graficar(mapa,lista_militar2)
-                    """mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
+                    mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
                     self.Camino(mapa,lista_militar2,fila_entrada,columna_entrada,fila_destino,columna_destino)
                     mapa.ver_cabeceras()
                     self.busca_enlace(mapa)
-                    mapa.ver_recorrido()"""
+                    mapa.ver_recorrido()
+                    if self.paso:
+                        self.camino_regreso(mapa,fila_entrada,columna_entrada,fila_destino,columna_destino)
+                        self.graficar(mapa,lista_militar2)
+                    else:
+                        print("No se puede graficar")
                 else:
-                    print("coordenadas errores o no es una entrada")
+                    print("Coordenadas erroroneas o no es una entrada")
             else:
                 print("Mision imposible, unidades civiles no existe o robot no cumple")
         else:
@@ -133,23 +132,39 @@ class Logica:
                     self.camino2(mapa,lista_militar,robot,fila_entrada,columna_entrada,fila_destino,columna_destino)
                     mapa.ver_recorrido()
                     print(robot.nombre)
+                    self.graficar(mapa,lista_militar)
                     
                 else:
-                    print("coordenadas errores o no es una entrada")
+                    print("Coordenadas erroroneas o no es una entrada")
             else:
                 print("Mision imposible, unidades de recursos no existe o robot no cumple")
     
+    def camino_regreso(self,mapa,fila1,columna1,fila2,columna2):
+        mapa.ver_caminoRegreso()
+        input()
+        if fila1==fila2 and columna1==columna2:
+            print("++++Recorrido de regreso completado+++")
+        else:
+            x = mapa.getCamino(fila2,columna2)
+            try:
+                #print(mapa.getCamino(fila2,columna2))
+                #print("retornos",x[0],x[1]) 
+                self.camino_regreso(mapa,fila1,columna1,x[0],x[1])
+            except:
+                print("-----------NO SE PUDO COMPLETAR EL CAMINO-------")
+                self.paso = False
+
     def Camino(self,mapa,lista,fila_entrada,columna_entrada,fila_destino,columna_destino):
         llegada = True
         while llegada:
             enter = input()
             mapa.ver_cabeceras()
             if fila_entrada==fila_destino and columna_entrada==columna_destino:
-                print("llego")
+                print("********RUTA ENCOTRADA*********")
                 llegada = False
             else:
                 for x in range(4):
-                    print("aber el for")
+                    #print("aber el for")
                     self.Enlace(mapa,lista,fila_entrada,columna_entrada)
                 
                 x = self.busca_enlace(mapa)
@@ -157,7 +172,8 @@ class Logica:
                     fila_entrada = x[0]
                     columna_entrada = x[1]
                 except:
-                    print("Al parecer no hay camino")
+                    print("-------NO HAY CAMINO DISPONIBLE-------")
+                    self.paso = False
                     llegada = False
 
     def Enlace(self,mapa,lista,fila,columna):
@@ -174,7 +190,7 @@ class Logica:
             mapa.setRecorrido(fila_abajo,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
 
         elif (mapa.getEstado(fila,colum_derecha)=="transitable" or mapa.getEstado(fila,colum_derecha)=="civil") and (mapa.getRecorrido(fila,colum_derecha)=="L") and lista.getMilitar(fila,colum_derecha) != True:    
-            print("derecha",mapa.getDistancia(fila,columna))
+            print("derecha")
             mapa.setRecorrido(fila,colum_derecha,"E",mapa.getDistancia(fila,columna),fila,columna)
 
         elif (mapa.getEstado(fila,colum_izq)=="transitable" or mapa.getEstado(fila,colum_izq)=="civil") and (mapa.getRecorrido(fila,colum_izq)=="L")and lista.getMilitar(fila,colum_izq) != True:    
@@ -189,12 +205,12 @@ class Logica:
     def busca_enlace(self,mapa):
         temp = mapa.cabeza
         while temp != None:
-            print(temp.obj.num)
+            #print(temp.obj.num)
             temp2 = temp.obj.lista.cabeza
             while temp2 != None:
                 if temp2.obj.recorrido == "E":
-                    print(temp2.obj.recorrido,temp2.obj.pre_fila,temp2.obj.pre_columna)
-                    print(temp.obj.num,temp2.obj.num)
+                    #print(temp2.obj.recorrido,temp2.obj.pre_fila,temp2.obj.pre_columna)
+                    #print(temp.obj.num,temp2.obj.num)
                     #self.Camino(mapa,int(temp.obj.num),int(temp2.obj.num),1,5)
                     temp2.obj.recorrido = "P"
                     return int(temp.obj.num),int(temp2.obj.num)
@@ -368,7 +384,10 @@ class Logica:
                 elif (temp2.obj.estado == "transitable") and militar.getMilitar(int(temp.obj.num),int(temp2.obj.num)):
                     cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" red\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
                 else:
-                    cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" gray95\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+                    if (temp2.obj.estado == "transitable") and (temp2.obj.camino == "V"):
+                        cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" gold\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+                    else:
+                        cadena +="   node[label = "+str(temp2.obj.num)+" fillcolor=\" gray95\" pos = \""+str(temp2.obj.num)+",-"+str(temp.obj.num)+"!\"]x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
 
                 temp2 = temp2.siguiente
             """
@@ -394,6 +413,6 @@ class Logica:
         
 p = Logica('C:/Users/otrop/Desktop/Entrada0.xml')
 p.readXML()
-p.seleccion("ChapinRescue","CiudadGotica","Ironman",13,9,14,19)
+p.seleccion("ChapinRescue","CiudadGuate2","Ironman",3,1,1,5)
 #p.Lista_Mapas.ver_mapas()
 #p.Lista_Drones.ver_drones()

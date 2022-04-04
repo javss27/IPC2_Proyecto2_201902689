@@ -22,7 +22,7 @@ class Lista:
 
 
     def ver_cabeceras(self):    
-        print("aber")  
+        #print("aber")  
         if self.cabeza == None:
             print("ta vacio")
         else:        
@@ -54,6 +54,22 @@ class Lista:
                 temp2 = temp2.siguiente
             print()
             temp = temp.siguiente
+
+
+    def ver_caminoRegreso(self):
+        if self.cabeza == None:
+            print("sin camino")
+        else:
+            temp = self.cabeza
+            while temp != None:
+                print(temp.obj.num,"\t",end="")
+                temp2 = temp.obj.lista.cabeza
+                while temp2 != None:
+                    #print(temp2.obj.pre_fila,temp2.obj.pre_columna, end="   ")
+                    print(temp2.obj.camino, "  ", end=" ")
+                    temp2 = temp2.siguiente
+                print()
+                temp = temp.siguiente
 
     def buscar(self,nombre,unidad):
         if self.cabeza == None:
@@ -209,7 +225,7 @@ class Lista:
             temp = self.cabeza
             while temp != None:
                 if temp.obj.nombre == ciudad:
-                    print(temp.obj.nombre)
+                    #print(temp.obj.nombre)
                     return temp.obj.lista
                 temp = temp.siguiente
 
@@ -365,6 +381,25 @@ class Lista:
                     return int(temp.obj.capacidad)
                 temp = temp.siguiente
         return False
+
+    def getCamino(self,fila,columna):
+        #print("fila")
+        if self.cabeza == None:
+            print("vacio")
+        else:
+            temp = self.cabeza
+            while temp != None:
+                #print("fila")
+                if int(temp.obj.num) == fila:
+                    temp2 = temp.obj.lista.cabeza
+                    while temp2 != None:
+                        #print("columna")
+                        if int(temp2.obj.num)==columna:
+                            temp2.obj.camino = "V"
+                            print("Estado Camino")
+                            return int(temp2.obj.pre_fila), int(temp2.obj.pre_columna)
+                        temp2 = temp2.siguiente
+                temp = temp.siguiente
 
     def borrar(self, nodo):
         if nodo == self.cabeza:
