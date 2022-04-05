@@ -43,6 +43,20 @@ class Lista:
                 temp = temp.siguiente
         print()
 
+    def verEstado(self,temporal):
+        if temporal == None:
+            print("vacio")
+        else:
+            temp = temporal
+            print(" --Lista de Unidades--")
+            while temp != None:
+                temp2 = temp.obj.lista.cabeza
+                while temp2 != None:
+                    if temp2.obj.estado != "intransitable" and temp2.obj.estado != "transitable":
+                        print("   *Tipo:",temp2.obj.estado," fila:",temp.obj.num," col:",temp2.obj.num)
+                    temp2 = temp2.siguiente
+                temp = temp.siguiente
+
     def ver_recorrido(self):
         temp = self.cabeza
         while temp != None:
@@ -144,13 +158,14 @@ class Lista:
 
 
     def ver_militar(self):    
-        print("Lista de unidades militares")  
+        
+        print("   --Lista de unidades militares--")  
         if self.cabeza == None:
             print("ta vacio")
         else:        
             temp = self.cabeza
             while temp != None:
-                print("fila:",temp.obj.fila ,"columa:",temp.obj.columna,temp.obj.capacidad)
+                print("     fila:",temp.obj.fila ," colum:",temp.obj.columna,"Capacidad:",temp.obj.capacidad)
                 temp = temp.siguiente
 
     def buscar_salida(self,fila,columna,unidad):
@@ -190,9 +205,10 @@ class Lista:
         if self.cabeza == None:
                 print("ta vacio")
         else:        
+            print("***LISTA DE ROBOTS****")
             temp = self.cabeza
             while temp != None:
-                print(temp.obj.nombre )
+                print("NOMBRE:",temp.obj.nombre," CAPACIDAD:",temp.obj.capacidad," TIPO:",temp.obj.tipo )
                 temp = temp.siguiente
 
     def buscar_tipo_robot(self,nombre,tipo):
@@ -210,14 +226,20 @@ class Lista:
         return False
     
     def ver_mapas(self):
+
         if self.cabeza == None:
             print("ta vacio")
         else:        
+            print("++++LISTA DE CIUDADES++++")
             temp = self.cabeza
             while temp != None:
+                print("")
                 print(temp.obj.nombre)
+                self.verEstado(temp.obj.lista.cabeza)
+                print("")
+                temp.obj.lista2.ver_militar()
                 temp = temp.siguiente
-
+        print("")
     def getMapa(self,ciudad):
         if self.cabeza == None:
             print("ta vacio")

@@ -1,7 +1,7 @@
 from typing import List
 from xml.dom import minidom
 
-from cv2 import COLORMAP_AUTUMN
+from cv2 import CAP_PROP_XI_ACQ_BUFFER_SIZE, COLORMAP_AUTUMN
 from TDAS import *
 from clases import *
 import os
@@ -12,6 +12,7 @@ class Logica:
         self.Lista_Mapas = Lista()
         self.Lista_Drones = Lista()
         self.paso = True
+        self.regreso = 0
         
     def readXML(self):
         etiqueta_ciudad = self.terreno[0].getElementsByTagName('ciudad')
@@ -102,17 +103,18 @@ class Logica:
                 #print("aber el rescate")
                 mapa = self.Lista_Mapas.getMapa(ciudad)
                 lista_militar2 = self.Lista_Mapas.getLista_Militar(ciudad)
+                robot = self.Lista_Drones.getRobot(robot)
                 # mapa.ver_cabeceras()
                 if mapa.buscar_entrada(fila_entrada,columna_entrada) and mapa.buscar_salida(fila_destino,columna_destino,"civil"):
                     print("ya esta en la entrada pos fila: ",fila_entrada,"columa",columna_entrada)
                     mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
                     self.Camino(mapa,lista_militar2,fila_entrada,columna_entrada,fila_destino,columna_destino)
                     mapa.ver_cabeceras()
-                    self.busca_enlace(mapa)
                     mapa.ver_recorrido()
                     if self.paso:
+                        datos = "Ciudad: "+ciudad+"\nTipo de Mision: Rescate\nUnidad Entrada:"+str(fila_entrada)+","+str(columna_entrada)+"\nUnidad civil rescada: "+str(fila_destino)+","+str(columna_destino)+"\nRobot utilizado: "+robot.nombre+"(ChapinRescue)"
                         self.camino_regreso(mapa,fila_entrada,columna_entrada,fila_destino,columna_destino)
-                        self.graficar(mapa,lista_militar2)
+                        self.graficar(mapa,lista_militar2,datos)
                     else:
                         print("No se puede graficar")
                 else:
@@ -125,6 +127,7 @@ class Logica:
                 mapa = self.Lista_Mapas.getMapa(ciudad)
                 robot = self.Lista_Drones.getRobot(robot)
                 lista_militar = self.Lista_Mapas.getLista_Militar(ciudad)
+                capacidad_incial = robot.capacidad
                 if mapa.buscar_entrada(fila_entrada,columna_entrada) and mapa.buscar_salida(fila_destino,columna_destino,"recurso"):
                     print("ya esta en la entrada",fila_entrada,"columa",columna_entrada)
                     mapa.setRecorrido(fila_entrada,columna_entrada,"P",0,fila_entrada,columna_entrada)
@@ -132,7 +135,13 @@ class Logica:
                     self.camino2(mapa,lista_militar,robot,fila_entrada,columna_entrada,fila_destino,columna_destino)
                     mapa.ver_recorrido()
                     print(robot.nombre)
-                    self.graficar(mapa,lista_militar)
+                    if self.paso:
+                        datos = "Ciudad: "+ciudad+"\nTipo de Mision: Recursos\nUnidad Entrada:"+str(fila_entrada)+","+str(columna_entrada)+"\nUnidad Recuro: "+str(fila_destino)+","+str(columna_destino)+"\nRobot utilizado: "+robot.nombre+"(ChapinFigther - Capacidad Inicial: "+str(capacidad_incial)+", Capacidad final: "+str(robot.capacidad)+")"
+                        self.camino_regreso(mapa,fila_entrada,columna_entrada,fila_destino,columna_destino)
+                        self.graficar(mapa,lista_militar,datos)
+                    else:
+                        print("No se puede graficar")
+                
                     
                 else:
                     print("Coordenadas erroroneas o no es una entrada")
@@ -217,27 +226,62 @@ class Logica:
                 temp2 = temp2.siguiente
             temp = temp.siguiente
     
+    
+
     def camino2(self,mapa,lista_militar,robot,fila_entrada,columna_entrada,fila_destino,columna_destino):
+        filaaux= fila_entrada
+        columaux = columna_entrada
+        capacidad_aux = robot.capacidad
         llegada = True
         while llegada:
             entrada = input()
             mapa.ver_cabeceras()
             if fila_entrada==fila_destino and columna_entrada==columna_destino:
-                print("llego")
+                print("********RUTA ENCOTRADA*********")
                 llegada = False
             else:
                 for x in range(4):
                     print("aber el for")
                     self.Enlace2(mapa,lista_militar,robot,fila_entrada,columna_entrada)
                 
-                x = self.busca_enlace(mapa)
+                x = self.busca_enlace2(mapa,lista_militar,robot)
                 try:
-                    fila_entrada = x[0]
-                    columna_entrada = x[1]
+                    if self.regreso == 1:
+                        self.regreso = 0
+                        fila_entrada = filaaux
+                        columna_entrada = columaux
+                        robot.capacidad = capacidad_aux
+                    else:
+                        fila_entrada = x[0]
+                        columna_entrada = x[1]
                 except:
-                    print("Al parecer no hay camino")
+                    print("-------NO HAY CAMINO DISPONIBLE-------")
+                    self.paso = False
                     llegada = False
     
+    def busca_enlace2(self,mapa,lista_militar,robot):
+        temp = mapa.cabeza
+        while temp != None:
+            #print(temp.obj.num)
+            temp2 = temp.obj.lista.cabeza
+            while temp2 != None:
+                if temp2.obj.recorrido == "E":
+                    #print(temp2.obj.recorrido,temp2.obj.pre_fila,temp2.obj.pre_columna)
+                    #print(temp.obj.num,temp2.obj.num)
+                    #self.Camino(mapa,int(temp.obj.num),int(temp2.obj.num),1,5)
+                    print(".........")
+                    if lista_militar.getMilitar(int(temp.obj.num),int(temp2.obj.num)) and int(robot.capacidad) >= 0:
+                        print("if")
+                        nueva_capacidad = int(robot.capacidad)-lista_militar.getCapacidad(int(temp.obj.num),int(temp2.obj.num))
+                        if nueva_capacidad >= 0:
+                            robot.capacidad = nueva_capacidad
+                            print("capcidad en P:",nueva_capacidad)
+                            temp2.obj.recorrido = "P"        
+                    temp2.obj.recorrido = "P"
+                    return int(temp.obj.num),int(temp2.obj.num)
+                temp2 = temp2.siguiente
+            temp = temp.siguiente
+
     def Enlace2(self,mapa,lista_militar,robot,fila,columna):
         fila_arriba = fila-1
         fila_abajo = fila+1
@@ -250,13 +294,15 @@ class Logica:
                 print("si hay unidad militar")
                 print("cap unidad",lista_militar.getCapacidad(fila_arriba,columna)," cap robot",robot.capacidad)
                 nuevaCapacidad = int(robot.capacidad)-lista_militar.getCapacidad(fila_arriba,columna)
-                robot.capacidad = nuevaCapacidad
-                print("nueva cap robt:",nuevaCapacidad)
+                #robot.capacidad = nuevaCapacidad
+                
                 if nuevaCapacidad >= 0:
                     mapa.setRecorrido(fila_arriba,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
+                    print("nueva cap robt:",nuevaCapacidad)
                 else:
-                    print("El robot:",robot.nombre," no fue derrotado :(")
-                
+                    #mapa.setRecorrido(fila_arriba,columna,"E",mapa.getDistancia(fila,columna),0,0)
+                    print("POR AQUI POSIBLEMENTE NO  El robot:",robot.nombre," no fue derrotado :(")
+                    self.regreso = 1
                 #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
             else:
                 if int(robot.capacidad) < 0:
@@ -274,12 +320,15 @@ class Logica:
                 #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
                 print("cap unidad",lista_militar.getCapacidad(fila,colum_derecha)," cap robot",robot.capacidad)
                 nuevaCapacidad = int(robot.capacidad)-lista_militar.getCapacidad(fila_abajo,columna)
-                robot.capacidad = nuevaCapacidad
+                
                 print("nueva cap robt:",nuevaCapacidad)
                 if nuevaCapacidad >= 0:
-                    mapa.setRecorrido(fila_abajo,columna,"E",mapa.getDistancia(fila,columna),fila,columna)
+                    mapa.setRecorrido(fila_abajo,columna,"E",mapa.getDistancia(fila,columna),fila,columna)    
+                    #robot.capacidad = nuevaCapacidad
                 else:
-                    print("El robot:",robot.nombre," no fue derrotado :(")
+                    #mapa.setRecorrido(fila_abajo,columna,"E",mapa.getDistancia(fila,columna),0,0)
+                    print("POR AQUI POSIBLEMTNE NO  El robot:",robot.nombre," no fue derrotado :(")
+                    self.regreso = 1
             else:
                 print("no si hay unidad militar")
                 #si no existe hay que siguir normal
@@ -297,12 +346,15 @@ class Logica:
                 print("si hay unidad militar")
                 print("cap unidad",lista_militar.getCapacidad(fila,colum_derecha)," cap robot",robot.capacidad)
                 nuevaCapacidad = int(robot.capacidad)-lista_militar.getCapacidad(fila,colum_derecha)
-                robot.capacidad = nuevaCapacidad
+                
                 print("nueva cap robt:",nuevaCapacidad)
                 if nuevaCapacidad >= 0:
-                    mapa.setRecorrido(fila,colum_derecha,"E",mapa.getDistancia(fila,columna),fila,columna)
+                    mapa.setRecorrido(fila,colum_derecha,"E",mapa.getDistancia(fila,columna),fila,columna)    
+                    #robot.capacidad = nuevaCapacidad
                 else:
-                    print("El robot:",robot.nombre," no fue derrotado :(")
+                    print("POR AQUI POSIBLEMENTE NO El robot:",robot.nombre," no fue derrotado :(")
+                    #mapa.setRecorrido(fila,colum_derecha,"E",mapa.getDistancia(fila,columna),0,0)
+                    self.regreso = 1
                 #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
             else:
                 if int(robot.capacidad) < 0:
@@ -322,12 +374,15 @@ class Logica:
                 #si existe hay que buscar al robot y ver como va en capacidad para validar si seguir o no
                 print("cap unidad",lista_militar.getCapacidad(fila,colum_derecha)," cap robot",robot.capacidad)
                 nuevaCapacidad = int(robot.capacidad)-lista_militar.getCapacidad(fila,colum_izq)
-                robot.capacidad = nuevaCapacidad
+                
                 print("nueva cap robt:",nuevaCapacidad)
                 if nuevaCapacidad >= 0:
-                    mapa.setRecorrido(fila,colum_izq,"E",mapa.getDistancia(fila,columna),fila,columna)
+                    mapa.setRecorrido(fila,colum_izq,"E",mapa.getDistancia(fila,columna),fila,columna)    
+                    #robot.capacidad = nuevaCapacidad
                 else:
-                    print("El robot:",robot.nombre," no fue derrotado :(")
+                    print("POR AQUI POSBIBLEMNTE NO El robot:",robot.nombre," no fue derrotado :(")
+                    #mapa.setRecorrido(fila,colum_izq,"E",mapa.getDistancia(fila,columna),0,0)
+                    self.regreso = 1
             else:
         
                 if int(robot.capacidad) < 0:
@@ -343,7 +398,7 @@ class Logica:
             print("Sin movimiento",mapa.getEstado(fila,colum_derecha),mapa.getEstado(fila,colum_derecha),mapa.getRecorrido(fila,colum_derecha))
             print("Sin movimiento",mapa.getEstado(fila,colum_izq),mapa.getEstado(fila,colum_izq),mapa.getRecorrido(fila,colum_izq))"""
 
-    def graficar(self,mapa,militar):
+    def graficar(self,mapa,militar,datos):
         nombre = "nameXD"
         cadena = "digraph Matriz{ \n"; 
         cadena += "node[shape = box,width=0.95,height=0.95,fillcolor=\"azure2\" color=\"white\" style=\"filled\"];\n"
@@ -400,12 +455,36 @@ class Logica:
             temp2 = temp.obj.lista.cabeza
             if temp.obj.lista.cabeza != None:
                 cadena+="y"+str(temp.obj.num)+"->"+"x"+str(temp.obj.num)+"y"+str(temp2.obj.num)+";\n"
+
+            node[shape = box,width=0.5,height=0.5 label = 5 fillcolor=" black" pos = "1,-4!"]i1;
+   node[label = "intransitable     " fillcolor=" white" pos = "2,-4!"]i2;
+   
+   node[shape = box,width=0.5,height=0.5 label = "" fillcolor=" forestgreen" pos = "1,-5!"]e1;
+   node[label = "Entrada           " fillcolor="white" pos = "2,-5!"]e2;
+   
+   node[shape = box,width=0.5,height=0.5 label = "" fillcolor=" blue2" pos = "3,-4!"]c1;
+   node[label = "Unidad Civil  " fillcolor="white" pos = "4,-4!"]c2;
+   
+   node[shape = box,width=0.5,height=0.5 label = "" fillcolor=" red" pos = "3,-5!"]m1;
+   node[label = "Unidad Militar" fillcolor="white" pos = "4,-5!"]m2;
+   
+   node[shape = box,width=0.5,height=0.5 label = "" fillcolor=" gray95" pos = "5,-4!"]r1;
+   node[label = "Camino        " fillcolor="white" pos = "6,-4!"]r2;
+   
+   node[shape = box,width=0.5,height=0.5 label = "" fillcolor=" gray55" pos = "5,-5!"]r4;
+   node[label = "Recurso" fillcolor="white" pos = "6,-5!"]r5;
             """
+            
             cadena += "\n"
             temp = temp.siguiente
-
+        cadena += "label =\""+str(datos)+"\""
         cadena+= "\n}"
         print(cadena)
+        archivo = open('Ciudad.neato','w')
+        archivo.write(cadena)
+        archivo.close()
+        os.system('neato -Tpdf Ciudad.neato -o Ciudad.pdf')
+        os.startfile('Ciudad.pdf')
  #hacer un recorrido que comience desde las unidades militares para ver si llega al rescate 
  # si llega retonrar una matriz 
  # si no llega no retornar nada o retornar la matriz en la forma que se quedo
@@ -413,6 +492,7 @@ class Logica:
         
 p = Logica('C:/Users/otrop/Desktop/Entrada0.xml')
 p.readXML()
-p.seleccion("ChapinRescue","CiudadGuate2","Ironman",3,1,1,5)
+p.seleccion("ChapinFighter","CiudadGotica","Robocop",3,10,13,15)
+#p.seleccion("ChapinRescue","CiudadGuate2","Ironman",3,1,1,5)
 #p.Lista_Mapas.ver_mapas()
 #p.Lista_Drones.ver_drones()
