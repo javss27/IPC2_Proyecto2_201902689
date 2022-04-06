@@ -123,7 +123,7 @@ class Logica:
                 print("Mision imposible, unidades civiles no existe o robot no cumple")
         else:
             if self.Lista_Mapas.buscar(ciudad,"recurso") and self.Lista_Drones.buscar_tipo_robot(robot,tipo_mision) :
-                print("aber los recursos")
+                #print("aber los recursos")
                 mapa = self.Lista_Mapas.getMapa(ciudad)
                 robot = self.Lista_Drones.getRobot(robot)
                 lista_militar = self.Lista_Mapas.getLista_Militar(ciudad)
@@ -241,7 +241,7 @@ class Logica:
                 llegada = False
             else:
                 for x in range(4):
-                    print("aber el for")
+                    #print("aber el for")
                     self.Enlace2(mapa,lista_militar,robot,fila_entrada,columna_entrada)
                 
                 x = self.busca_enlace2(mapa,lista_militar,robot)
@@ -479,7 +479,7 @@ class Logica:
             temp = temp.siguiente
         cadena += "label =\""+str(datos)+"\""
         cadena+= "\n}"
-        print(cadena)
+        #print(cadena)
         archivo = open('Ciudad.neato','w')
         archivo.write(cadena)
         archivo.close()
@@ -490,9 +490,9 @@ class Logica:
  # si no llega no retornar nada o retornar la matriz en la forma que se quedo
  # para todo esto ir tomando la capacidad del robot   
         
-p = Logica('C:/Users/otrop/Desktop/Entrada0.xml')
-p.readXML()
-p.seleccion("ChapinFighter","CiudadGotica","Robocop",3,10,13,15)
+#p = Logica('C:/Users/otrop/Desktop/Entrada0.xml')
+#p.readXML()
+#p.seleccion("ChapinFighter","CiudadGotica","Robocop",3,10,13,15)
 #p.seleccion("ChapinRescue","CiudadGuate2","Ironman",3,1,1,5)
 #p.Lista_Mapas.ver_mapas()
 #p.Lista_Drones.ver_drones()
